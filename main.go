@@ -34,7 +34,7 @@ func main() {
 	var keys Key
 	var plainText PlainText
 
-	keys.Rounds = 1
+	keys.Rounds = 2
 	keys.ColumnSize = 4
 	keys.TotalSize = 4 * keys.ColumnSize
 

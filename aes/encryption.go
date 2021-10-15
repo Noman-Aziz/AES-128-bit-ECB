@@ -88,6 +88,39 @@ func ShiftRows(stateMatrix [16]byte) [16]byte {
 func MixColumns(stateMatrix [16]byte) [16]byte {
 	var newStateMatrix [16]byte = stateMatrix
 
+	var M [16]byte = [16]byte{0x02, 0x03, 0x01, 0x01, 0x01, 0x02, 0x03, 0x01, 0x01, 0x01, 0x02, 0x03, 0x03, 0x01, 0x01, 0x02}
+
+	//Converting Col Major into Row Major
+	for i := 0; i < 4; i++ {
+		for j := 0; j < 4; j++ {
+			stateMatrix[i*4+j] = newStateMatrix[j*4+i]
+		}
+	}
+
+	for i := 0; i < 4; i++ {
+		for j := 0; j < 4; j++ {
+			newStateMatrix[i*4+j] = 0
+			for k := 0; k < 4; k++ {
+				temp, overflow := MultiplicationWithOverflowCheck(M[i*4+k], stateMatrix[k*4+j])
+
+				//Incase of Overflow, Add 1B (Gloys Field Constant)
+				if overflow {
+					temp = temp ^ 0x1B
+				}
+
+				newStateMatrix[i*4+j] = newStateMatrix[i*4+j] ^ temp
+			}
+		}
+	}
+
+	//Converting Row Major back to Col Major
+	var temp [16]byte = newStateMatrix
+	for i := 0; i < 4; i++ {
+		for j := 0; j < 4; j++ {
+			newStateMatrix[i*4+j] = temp[j*4+i]
+		}
+	}
+
 	return newStateMatrix
 }
 
@@ -121,6 +154,11 @@ func Encrypt(stateMatrix [][16]byte, numChunks int, rounds int, roundKeys [][]by
 				//Mixing Columns
 				tempStateMatrix = MixColumns(tempStateMatrix)
 			}
+
+			for k := 0; k < 16; k++ {
+				fmt.Print(strconv.FormatInt(int64(tempStateMatrix[k]), 16), " ")
+			}
+			fmt.Println()
 
 			//Adding Round Key
 			tempStateMatrix = AddRoundKey(tempStateMatrix, roundKeys[j])
