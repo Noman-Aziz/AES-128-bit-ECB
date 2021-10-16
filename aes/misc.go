@@ -48,17 +48,41 @@ func hex2int(l string) int {
 	return 0
 }
 
-func MultiplicationWithOverflowCheck(a byte, b byte) (byte, bool) {
-	// Check if either of them is zero
+func CheckOverflow(a byte, b byte, result byte) bool {
 	if a == 0 || b == 0 {
-		return 0, false
+		return false
 	}
-
-	var result byte = a * b
 
 	if a == result/b {
-		return result, false
+		return false
 	} else {
-		return result, true
+		return true
 	}
+
+}
+
+func MultiplicationWithOverflowCheck(a byte, b byte) byte {
+
+	var result byte
+
+	if a == 0x01 {
+		result = b
+	} else if a == 0x02 {
+		result = a * b
+
+		if CheckOverflow(a, b, result) {
+			result ^= 0x1B
+		}
+	} else if a == 0x03 {
+		result = 0x02 * b
+
+		if CheckOverflow(a, b, result) {
+			result ^= 0x1B
+		}
+
+		result ^= b
+
+	}
+
+	return result
 }

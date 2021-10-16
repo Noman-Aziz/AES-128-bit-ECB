@@ -101,14 +101,10 @@ func MixColumns(stateMatrix [16]byte) [16]byte {
 		for j := 0; j < 4; j++ {
 			newStateMatrix[i*4+j] = 0
 			for k := 0; k < 4; k++ {
-				temp, overflow := MultiplicationWithOverflowCheck(M[i*4+k], stateMatrix[k*4+j])
-
-				//Incase of Overflow, Add 1B (Gloys Field Constant)
-				if overflow {
-					temp = temp ^ 0x1B
+				newStateMatrix[i*4+j] ^= MultiplicationWithOverflowCheck(M[i*4+k], stateMatrix[k*4+j])
+				if i == 0 && j == 0 {
+					fmt.Println(strconv.FormatInt(int64(M[i*4+k]), 16), strconv.FormatInt(int64(stateMatrix[k*4+j]), 16), strconv.FormatInt(int64(MultiplicationWithOverflowCheck(M[i*4+k], stateMatrix[k*4+j])), 16))
 				}
-
-				newStateMatrix[i*4+j] = newStateMatrix[i*4+j] ^ temp
 			}
 		}
 	}
