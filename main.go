@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"math"
 	"os"
 	"strconv"
 
@@ -23,7 +24,7 @@ type PlainText struct {
 	Text             []byte
 }
 
-var CipherText []byte
+var CipherTexts [][16]byte
 
 func main() {
 
@@ -34,7 +35,7 @@ func main() {
 	var keys Key
 	var plainText PlainText
 
-	keys.Rounds = 2
+	keys.Rounds = 10
 	keys.ColumnSize = 4
 	keys.TotalSize = 4 * keys.ColumnSize
 
@@ -43,6 +44,8 @@ func main() {
 	for i := 0; i < keys.Rounds; i++ {
 		keys.RoundKeys[i] = make([]byte, keys.TotalSize)
 	}
+
+	fmt.Println("\n\tTaking Inputs\n")
 
 	//Taking Key Input
 	fmt.Printf("Enter cipher key : ")
@@ -63,12 +66,14 @@ func main() {
 	fmt.Println("Padding character is 'X'")
 
 	//Determining Length of Plain Text and Allocating Memory Accordingly
-	plainText.NumChunks = len(plainText.Text) / 16
+	var temp float64 = float64(len(plainText.Text)) / 16.0
+	plainText.NumChunks = int(math.Ceil(temp))
 	if plainText.NumChunks == 0 {
 		plainText.NumChunks = 1
 	}
 
 	plainText.StateMatrix = make([][16]byte, plainText.NumChunks)
+	CipherTexts = make([][16]byte, plainText.NumChunks)
 
 	//Seperating the chunks from PlainText
 	var index int = 0
@@ -100,7 +105,17 @@ func main() {
 	}
 
 	//Perform Encryption
-	fmt.Println("\n\tPerforming Encryption Process\n")
+	fmt.Println("\n\tPerforming Encryption Process (ECB Mode)\n")
 
-	aes.Encrypt(plainText.StateMatrix, plainText.NumChunks, keys.Rounds, keys.RoundKeys, keys.TotalSize)
+	for i := 0; i < plainText.NumChunks; i++ {
+		CipherTexts[i] = aes.Encrypt(plainText.StateMatrix[i], keys.Rounds, keys.RoundKeys, keys.TotalSize)
+	}
+
+	for i := 0; i < plainText.NumChunks; i++ {
+		fmt.Print("Cipher Text of Block ", i+1, " : ")
+		for j := 0; j < 16; j++ {
+			fmt.Print(strconv.FormatInt(int64(CipherTexts[i][j]), 16), " ")
+		}
+		fmt.Println()
+	}
 }

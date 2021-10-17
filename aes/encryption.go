@@ -1,7 +1,6 @@
 package aes
 
 import (
-	"fmt"
 	"strconv"
 )
 
@@ -117,42 +116,30 @@ func MixColumns(stateMatrix [16]byte) [16]byte {
 	return newStateMatrix
 }
 
-func Encrypt(stateMatrix [][16]byte, numChunks int, rounds int, roundKeys [][]byte, totalSize int) [16]byte {
-	//var cipherText []byte = make([]byte, numChunks*16)
+func Encrypt(stateMatrix [16]byte, rounds int, roundKeys [][]byte, totalSize int) [16]byte {
 	var tempStateMatrix [16]byte
 
-	//For Every Chunk
-	for i := 0; i < numChunks; i++ {
-		tempStateMatrix = stateMatrix[i]
+	//Round 0
+	tempStateMatrix = AddRoundKey(stateMatrix, roundKeys[0])
 
-		//Round 0
-		tempStateMatrix = AddRoundKey(tempStateMatrix, roundKeys[0])
+	//Rest Rounds
+	for i := 1; i <= rounds; i++ {
 
-		//Rest Rounds
-		for j := 1; j <= rounds; j++ {
+		//Substituting Bytes
+		tempStateMatrix = BytesSubstitution(tempStateMatrix)
 
-			//Substituting Bytes
-			tempStateMatrix = BytesSubstitution(tempStateMatrix)
+		//Shifting Rows
+		tempStateMatrix = ShiftRows(tempStateMatrix)
 
-			//Shifting Rows
-			tempStateMatrix = ShiftRows(tempStateMatrix)
-
-			//Except Last Round
-			if j != rounds {
-				//Mixing Columns
-				tempStateMatrix = MixColumns(tempStateMatrix)
-			}
-
-			for k := 0; k < 16; k++ {
-				fmt.Print(strconv.FormatInt(int64(tempStateMatrix[k]), 16), " ")
-			}
-			fmt.Println()
-
-			//Adding Round Key
-			tempStateMatrix = AddRoundKey(tempStateMatrix, roundKeys[j])
+		//Except Last Round
+		if i != rounds {
+			//Mixing Columns
+			tempStateMatrix = MixColumns(tempStateMatrix)
 		}
+
+		//Adding Round Key
+		tempStateMatrix = AddRoundKey(tempStateMatrix, roundKeys[i])
 	}
 
-	var cipherText [16]byte = tempStateMatrix
-	return cipherText
+	return tempStateMatrix
 }
