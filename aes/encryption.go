@@ -102,9 +102,6 @@ func MixColumns(stateMatrix [16]byte) [16]byte {
 			newStateMatrix[i*4+j] = 0
 			for k := 0; k < 4; k++ {
 				newStateMatrix[i*4+j] ^= MultiplicationWithOverflowCheck(M[i*4+k], stateMatrix[k*4+j])
-				if i == 0 && j == 0 {
-					fmt.Println(strconv.FormatInt(int64(M[i*4+k]), 16), strconv.FormatInt(int64(stateMatrix[k*4+j]), 16), strconv.FormatInt(int64(MultiplicationWithOverflowCheck(M[i*4+k], stateMatrix[k*4+j])), 16))
-				}
 			}
 		}
 	}
@@ -139,11 +136,6 @@ func Encrypt(stateMatrix [][16]byte, numChunks int, rounds int, roundKeys [][]by
 
 			//Shifting Rows
 			tempStateMatrix = ShiftRows(tempStateMatrix)
-
-			for k := 0; k < 16; k++ {
-				fmt.Print(strconv.FormatInt(int64(tempStateMatrix[k]), 16), " ")
-			}
-			fmt.Println()
 
 			//Except Last Round
 			if j != rounds {
