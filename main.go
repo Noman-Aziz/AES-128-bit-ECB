@@ -112,7 +112,7 @@ func main() {
 	}
 
 	for i := 0; i < plainText.NumChunks; i++ {
-		fmt.Print("Cipher Text of Block ", i+1, " : ")
+		fmt.Print("Cipher Text of Block ", i+1, " (", string(plainText.StateMatrix[i][:]), ") : ")
 		for j := 0; j < 16; j++ {
 			fmt.Print(strconv.FormatInt(int64(CipherTexts[i][j]), 16), " ")
 		}
