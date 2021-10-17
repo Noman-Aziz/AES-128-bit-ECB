@@ -1,5 +1,7 @@
 package aes
 
+import "strconv"
+
 func doXOR(a [4]byte, b [4]byte) [4]byte {
 	var c [4]byte
 
@@ -79,4 +81,21 @@ func MultiplicationWithOverflowCheck(a byte, b byte) byte {
 	}
 
 	return result
+}
+
+func ConvertToArrayIndex(a byte) (int, int) {
+	//Decimal to Hex Equivalent
+	hexa := strconv.FormatInt(int64(a), 16)
+
+	var firstIndex int
+	var secondIndex int
+	if len(hexa) > 1 {
+		firstIndex = hex2int(string(hexa[0]))
+		secondIndex = hex2int(string(hexa[1]))
+	} else {
+		firstIndex = 0
+		secondIndex = hex2int(string(hexa[0]))
+	}
+
+	return firstIndex, secondIndex
 }

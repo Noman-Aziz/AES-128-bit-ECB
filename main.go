@@ -118,4 +118,16 @@ func main() {
 		}
 		fmt.Println()
 	}
+
+	//Perform Encryption
+	fmt.Println("\n\tPerforming Decryption Process (ECB Mode)\n")
+
+	for i := 0; i < plainText.NumChunks; i++ {
+		fmt.Print("Plain Text of Block ", i+1, " : ")
+		temp := aes.Decrypt(CipherTexts[i], keys.Rounds, keys.RoundKeys, keys.TotalSize)
+		for j := 0; j < 16; j++ {
+			fmt.Print(strconv.FormatInt(int64(temp[j]), 16), " ")
+		}
+		fmt.Println()
+	}
 }

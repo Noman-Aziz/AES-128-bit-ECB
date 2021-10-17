@@ -1,30 +1,19 @@
 package aes
 
-func AddRoundKey(stateMatrix [16]byte, roundKey []byte) [16]byte {
-	var newStateMatrix [16]byte
-
-	for i := 0; i < 16; i++ {
-		newStateMatrix[i] = stateMatrix[i] ^ roundKey[i]
-	}
-
-	return newStateMatrix
-}
-
-func BytesSubstitution(stateMatrix [16]byte) [16]byte {
+func InverseBytesSubstitution(stateMatrix [16]byte) [16]byte {
 
 	var newStateMatrix [16]byte = stateMatrix
 
 	for i := 0; i < 16; i++ {
 		firstIndex, secondIndex := ConvertToArrayIndex(newStateMatrix[i])
-
 		//row * length + col
-		newStateMatrix[i] = sbox[firstIndex*16+secondIndex]
+		newStateMatrix[i] = sboxInv[firstIndex*16+secondIndex]
 	}
 
 	return newStateMatrix
 }
 
-func ShiftRows(stateMatrix [16]byte) [16]byte {
+func InverseShiftRows(stateMatrix [16]byte) [16]byte {
 	var newStateMatrix [16]byte = stateMatrix
 
 	//Converting Col Major into Row Major
@@ -41,10 +30,10 @@ func ShiftRows(stateMatrix [16]byte) [16]byte {
 	newStateMatrix[3] = stateMatrix[3]
 
 	//Offset 1
-	newStateMatrix[4] = stateMatrix[5]
-	newStateMatrix[5] = stateMatrix[6]
-	newStateMatrix[6] = stateMatrix[7]
-	newStateMatrix[7] = stateMatrix[4]
+	newStateMatrix[4] = stateMatrix[7]
+	newStateMatrix[5] = stateMatrix[4]
+	newStateMatrix[6] = stateMatrix[5]
+	newStateMatrix[7] = stateMatrix[6]
 
 	//Offset 2
 	newStateMatrix[8] = stateMatrix[10]
@@ -53,10 +42,10 @@ func ShiftRows(stateMatrix [16]byte) [16]byte {
 	newStateMatrix[11] = stateMatrix[9]
 
 	//Offset 3
-	newStateMatrix[12] = stateMatrix[15]
-	newStateMatrix[13] = stateMatrix[12]
-	newStateMatrix[14] = stateMatrix[13]
-	newStateMatrix[15] = stateMatrix[14]
+	newStateMatrix[12] = stateMatrix[13]
+	newStateMatrix[13] = stateMatrix[14]
+	newStateMatrix[14] = stateMatrix[15]
+	newStateMatrix[15] = stateMatrix[11]
 
 	//Converting Row Major back to Col Major
 	var temp [16]byte = newStateMatrix
@@ -69,10 +58,10 @@ func ShiftRows(stateMatrix [16]byte) [16]byte {
 	return newStateMatrix
 }
 
-func MixColumns(stateMatrix [16]byte) [16]byte {
+func InverseMixColumns(stateMatrix [16]byte) [16]byte {
 	var newStateMatrix [16]byte = stateMatrix
 
-	var M [16]byte = [16]byte{0x02, 0x03, 0x01, 0x01, 0x01, 0x02, 0x03, 0x01, 0x01, 0x01, 0x02, 0x03, 0x03, 0x01, 0x01, 0x02}
+	var MInv [16]byte = [16]byte{0x0e, 0x0b, 0x0d, 0x09, 0x09, 0x0e, 0x0b, 0x0d, 0x0d, 0x09, 0x0e, 0x0b, 0x0b, 0x0d, 0x09, 0x0e}
 
 	//Converting Col Major into Row Major
 	for i := 0; i < 4; i++ {
@@ -85,7 +74,15 @@ func MixColumns(stateMatrix [16]byte) [16]byte {
 		for j := 0; j < 4; j++ {
 			newStateMatrix[i*4+j] = 0
 			for k := 0; k < 4; k++ {
-				newStateMatrix[i*4+j] ^= MultiplicationWithOverflowCheck(M[i*4+k], stateMatrix[k*4+j])
+				i1, i2 := ConvertToArrayIndex(MInv[i*4+k])
+				i3, i4 := ConvertToArrayIndex(stateMatrix[k*4+j])
+
+				var temp uint16 = uint16(L[i1*16+i2]) + uint16(L[i3*16+i4])
+				if temp > 0xff {
+					temp -= 0xff
+				}
+				i1, i2 = ConvertToArrayIndex(byte(temp))
+				newStateMatrix[i*4+j] ^= E[i1*16+i2]
 			}
 		}
 	}
@@ -101,29 +98,30 @@ func MixColumns(stateMatrix [16]byte) [16]byte {
 	return newStateMatrix
 }
 
-func Encrypt(stateMatrix [16]byte, rounds int, roundKeys [][]byte, totalSize int) [16]byte {
+func Decrypt(stateMatrix [16]byte, rounds int, roundKeys [][]byte, totalSize int) [16]byte {
 	var tempStateMatrix [16]byte
 
 	//Round 0
-	tempStateMatrix = AddRoundKey(stateMatrix, roundKeys[0])
+	tempStateMatrix = AddRoundKey(stateMatrix, roundKeys[rounds])
 
 	//Rest Rounds
-	for i := 1; i <= rounds; i++ {
+	for i := rounds - 1; i >= 0; i-- {
 
-		//Substituting Bytes
-		tempStateMatrix = BytesSubstitution(tempStateMatrix)
+		//Inverse Shifting Rows
+		tempStateMatrix = InverseShiftRows(tempStateMatrix)
 
-		//Shifting Rows
-		tempStateMatrix = ShiftRows(tempStateMatrix)
-
-		//Except Last Round
-		if i != rounds {
-			//Mixing Columns
-			tempStateMatrix = MixColumns(tempStateMatrix)
-		}
+		//Inverse Substituting Bytes
+		tempStateMatrix = InverseBytesSubstitution(tempStateMatrix)
 
 		//Adding Round Key
 		tempStateMatrix = AddRoundKey(tempStateMatrix, roundKeys[i])
+
+		//Except First Round
+		if i != 1 {
+			//Mixing Columns
+			tempStateMatrix = InverseMixColumns(tempStateMatrix)
+		}
+
 	}
 
 	return tempStateMatrix
