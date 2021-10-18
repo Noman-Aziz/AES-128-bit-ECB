@@ -63,14 +63,14 @@ func GW(w [4]byte, round int) [4]byte {
 	return g
 }
 
-func GenerateRoundKeys(prevRoundKey []byte, round int, columnSize int, totalSize int) []byte {
-	var newRoundKey = make([]byte, totalSize)
+func GenerateRoundKeys(prevRoundKey [16]byte, round int) [16]byte {
+	var newRoundKey [16]byte
 
 	//Seperating W Values
-	var w = make([][4]byte, columnSize)
+	var w [4][4]byte
 
 	var k int = 0
-	for i := 0; i < columnSize; i++ {
+	for i := 0; i < 4; i++ {
 		for j := 0; j < 4; j++ {
 			w[i][j] = prevRoundKey[k]
 			k++
@@ -79,7 +79,7 @@ func GenerateRoundKeys(prevRoundKey []byte, round int, columnSize int, totalSize
 
 	var gw3 [4]byte = GW(w[3], round)
 
-	var newW = make([][4]byte, columnSize)
+	var newW [4][4]byte
 
 	//Filling New W Values
 	newW[0] = doXOR(w[0], gw3)
@@ -91,7 +91,7 @@ func GenerateRoundKeys(prevRoundKey []byte, round int, columnSize int, totalSize
 	}
 
 	prevW := 1
-	for i := 1; i < columnSize; i++ {
+	for i := 1; i < 4; i++ {
 		newW[i] = doXOR(newW[i-1], w[prevW])
 		prevW++
 

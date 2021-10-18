@@ -11,10 +11,8 @@ import (
 )
 
 type Key struct {
-	Rounds     int      //10 in 128 bits, 12 in 192 bits,14 in 256 bits
-	ColumnSize int      //4 in 128 bits, 6 in 192 bits, 8 in 256 bits
-	TotalSize  int      //ColumnSize * 4
-	RoundKeys  [][]byte //0 till Rounds
+	Rounds    int        //10 in 128 bits, 12 in 192 bits,14 in 256 bits
+	RoundKeys [][16]byte //0 till Rounds
 }
 
 type PlainText struct {
@@ -35,24 +33,9 @@ func main() {
 	var keys Key
 	var plainText PlainText
 
-	keys.Rounds = 10
-	keys.ColumnSize = 4
-	keys.TotalSize = 4 * keys.ColumnSize
-
-	//Fixing Sizes for Dynamic Array
-	keys.RoundKeys = make([][]byte, keys.Rounds+1)
-	for i := 0; i < keys.Rounds; i++ {
-		keys.RoundKeys[i] = make([]byte, keys.TotalSize)
-	}
+	fmt.Println("\nAES 128 Bit with ECB Mode")
 
 	fmt.Println("\n\tTaking Inputs\n")
-
-	//Taking Key Input
-	fmt.Printf("Enter Cipher Key : ")
-	cin.Scan()
-
-	//Read initial key
-	keys.RoundKeys[0] = cin.Bytes()
 
 	//Taking Text Input
 	fmt.Printf("Enter Plain Text : ")
@@ -60,6 +43,30 @@ func main() {
 
 	//Reading initial plain text
 	plainText.Text = cin.Bytes()
+
+	//Taking Rounds Input
+	fmt.Printf("Enter Num Rounds : ")
+	_, err := fmt.Scan(&keys.Rounds)
+	if err != nil {
+		panic(err)
+	}
+
+	//Fixing Sizes for Dynamic Array
+	keys.RoundKeys = make([][16]byte, keys.Rounds+1)
+
+	//Taking Key Input
+	fmt.Printf("Enter Cipher Key (16 Characters): ")
+	cin.Scan()
+	buffer := cin.Bytes()
+
+	if len(buffer) != 16 {
+		panic("Error, Cipher Key is not of 16 Characters, Abort!")
+	}
+
+	//Read initial key
+	for i := 0; i < 16; i++ {
+		keys.RoundKeys[0][i] = buffer[i]
+	}
 
 	//Selecting and Displaying Padding Character
 	plainText.PaddingCharacter = 'X'
@@ -93,12 +100,12 @@ func main() {
 	fmt.Println("\n\tGenerating Round Keys\n")
 
 	for i := 0; i < keys.Rounds; i++ {
-		keys.RoundKeys[i+1] = aes.GenerateRoundKeys(keys.RoundKeys[i], i, keys.ColumnSize, keys.TotalSize)
+		keys.RoundKeys[i+1] = aes.GenerateRoundKeys(keys.RoundKeys[i], i)
 	}
 
 	for i := 0; i <= keys.Rounds; i++ {
 		fmt.Print("Round Key ", i, " : ")
-		for j := 0; j < keys.TotalSize; j++ {
+		for j := 0; j < 16; j++ {
 			fmt.Print(strconv.FormatInt(int64(keys.RoundKeys[i][j]), 16), " ")
 		}
 		fmt.Println()
@@ -108,7 +115,7 @@ func main() {
 	fmt.Println("\n\tPerforming Encryption Process (ECB Mode)\n")
 
 	for i := 0; i < plainText.NumChunks; i++ {
-		CipherTexts[i] = aes.Encrypt(plainText.StateMatrix[i], keys.Rounds, keys.RoundKeys, keys.TotalSize)
+		CipherTexts[i] = aes.Encrypt(plainText.StateMatrix[i], keys.Rounds, keys.RoundKeys)
 	}
 
 	for i := 0; i < plainText.NumChunks; i++ {
@@ -124,7 +131,7 @@ func main() {
 	fmt.Println("\n\tPerforming Decryption Process (ECB Mode)\n")
 
 	for i := 0; i < plainText.NumChunks; i++ {
-		temp := aes.Decrypt(CipherTexts[i], keys.Rounds, keys.RoundKeys, keys.TotalSize)
+		temp := aes.Decrypt(CipherTexts[i], keys.Rounds, keys.RoundKeys)
 		fmt.Println("Plain Text of Block ", i+1, " : ", string(temp[:]))
 		fmt.Print("Plain Text in Hex of Block ", i+1, " : ")
 		for j := 0; j < 16; j++ {

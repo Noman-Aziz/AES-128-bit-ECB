@@ -109,7 +109,7 @@ func InverseMixColumns(stateMatrix [16]byte) [16]byte {
 	return newStateMatrix
 }
 
-func Decrypt(stateMatrix [16]byte, rounds int, roundKeys [][]byte, totalSize int) [16]byte {
+func Decrypt(stateMatrix [16]byte, rounds int, roundKeys [][16]byte) [16]byte {
 	var tempStateMatrix [16]byte
 
 	//Round 10

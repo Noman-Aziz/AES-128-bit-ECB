@@ -1,6 +1,6 @@
 package aes
 
-func AddRoundKey(stateMatrix [16]byte, roundKey []byte) [16]byte {
+func AddRoundKey(stateMatrix [16]byte, roundKey [16]byte) [16]byte {
 	var newStateMatrix [16]byte
 
 	for i := 0; i < 16; i++ {
@@ -101,7 +101,7 @@ func MixColumns(stateMatrix [16]byte) [16]byte {
 	return newStateMatrix
 }
 
-func Encrypt(stateMatrix [16]byte, rounds int, roundKeys [][]byte, totalSize int) [16]byte {
+func Encrypt(stateMatrix [16]byte, rounds int, roundKeys [][16]byte) [16]byte {
 	var tempStateMatrix [16]byte
 
 	//Round 0
