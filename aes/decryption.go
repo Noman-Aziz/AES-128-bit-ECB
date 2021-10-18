@@ -45,7 +45,7 @@ func InverseShiftRows(stateMatrix [16]byte) [16]byte {
 	newStateMatrix[12] = stateMatrix[13]
 	newStateMatrix[13] = stateMatrix[14]
 	newStateMatrix[14] = stateMatrix[15]
-	newStateMatrix[15] = stateMatrix[11]
+	newStateMatrix[15] = stateMatrix[12]
 
 	//Converting Row Major back to Col Major
 	var temp [16]byte = newStateMatrix
@@ -74,15 +74,26 @@ func InverseMixColumns(stateMatrix [16]byte) [16]byte {
 		for j := 0; j < 4; j++ {
 			newStateMatrix[i*4+j] = 0
 			for k := 0; k < 4; k++ {
-				i1, i2 := ConvertToArrayIndex(MInv[i*4+k])
-				i3, i4 := ConvertToArrayIndex(stateMatrix[k*4+j])
 
-				var temp uint16 = uint16(L[i1*16+i2]) + uint16(L[i3*16+i4])
-				if temp > 0xff {
-					temp -= 0xff
+				if MInv[i*4+k] == 0x01 {
+					newStateMatrix[i*4+j] ^= stateMatrix[k*4+j]
+				} else if stateMatrix[k*4+j] == 0x01 {
+					newStateMatrix[i*4+j] ^= MInv[i*4+k]
+				} else if MInv[i*4+k] == 0x00 || stateMatrix[k*4+j] == 0x00 {
+					newStateMatrix[i*4+j] ^= 0x00
+				} else {
+					i1, i2 := ConvertToArrayIndex(MInv[i*4+k])
+					i3, i4 := ConvertToArrayIndex(stateMatrix[k*4+j])
+
+					var temp uint16 = uint16(L[i1*16+i2]) + uint16(L[i3*16+i4])
+
+					if temp > 0xff {
+						temp -= 0xff
+					}
+					i1, i2 = ConvertToArrayIndex(byte(temp))
+					newStateMatrix[i*4+j] ^= E[i1*16+i2]
 				}
-				i1, i2 = ConvertToArrayIndex(byte(temp))
-				newStateMatrix[i*4+j] ^= E[i1*16+i2]
+
 			}
 		}
 	}
@@ -101,7 +112,7 @@ func InverseMixColumns(stateMatrix [16]byte) [16]byte {
 func Decrypt(stateMatrix [16]byte, rounds int, roundKeys [][]byte, totalSize int) [16]byte {
 	var tempStateMatrix [16]byte
 
-	//Round 0
+	//Round 10
 	tempStateMatrix = AddRoundKey(stateMatrix, roundKeys[rounds])
 
 	//Rest Rounds
@@ -117,11 +128,10 @@ func Decrypt(stateMatrix [16]byte, rounds int, roundKeys [][]byte, totalSize int
 		tempStateMatrix = AddRoundKey(tempStateMatrix, roundKeys[i])
 
 		//Except First Round
-		if i != 1 {
+		if i != 0 {
 			//Mixing Columns
 			tempStateMatrix = InverseMixColumns(tempStateMatrix)
 		}
-
 	}
 
 	return tempStateMatrix

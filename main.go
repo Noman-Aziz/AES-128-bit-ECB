@@ -48,14 +48,14 @@ func main() {
 	fmt.Println("\n\tTaking Inputs\n")
 
 	//Taking Key Input
-	fmt.Printf("Enter cipher key : ")
+	fmt.Printf("Enter Cipher Key : ")
 	cin.Scan()
 
 	//Read initial key
 	keys.RoundKeys[0] = cin.Bytes()
 
 	//Taking Text Input
-	fmt.Printf("Enter plain text : ")
+	fmt.Printf("Enter Plain Text : ")
 	cin.Scan()
 
 	//Reading initial plain text
@@ -63,7 +63,7 @@ func main() {
 
 	//Selecting and Displaying Padding Character
 	plainText.PaddingCharacter = 'X'
-	fmt.Println("Padding character is 'X'")
+	fmt.Println("Padding Character is 'X'")
 
 	//Determining Length of Plain Text and Allocating Memory Accordingly
 	var temp float64 = float64(len(plainText.Text)) / 16.0
@@ -112,7 +112,8 @@ func main() {
 	}
 
 	for i := 0; i < plainText.NumChunks; i++ {
-		fmt.Print("Cipher Text of Block ", i+1, " (", string(plainText.StateMatrix[i][:]), ") : ")
+		fmt.Println("Cipher Text of Block ", i+1, " : ", string(CipherTexts[i][:]))
+		fmt.Print("Cipher Text in Hex of Block ", i+1, " : ")
 		for j := 0; j < 16; j++ {
 			fmt.Print(strconv.FormatInt(int64(CipherTexts[i][j]), 16), " ")
 		}
@@ -123,8 +124,9 @@ func main() {
 	fmt.Println("\n\tPerforming Decryption Process (ECB Mode)\n")
 
 	for i := 0; i < plainText.NumChunks; i++ {
-		fmt.Print("Plain Text of Block ", i+1, " : ")
 		temp := aes.Decrypt(CipherTexts[i], keys.Rounds, keys.RoundKeys, keys.TotalSize)
+		fmt.Println("Plain Text of Block ", i+1, " : ", string(temp[:]))
+		fmt.Print("Plain Text in Hex of Block ", i+1, " : ")
 		for j := 0; j < 16; j++ {
 			fmt.Print(strconv.FormatInt(int64(temp[j]), 16), " ")
 		}
